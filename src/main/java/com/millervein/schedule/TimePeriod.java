@@ -46,6 +46,10 @@ public class TimePeriod {
 		return !((other.end.isBefore(this.start) || other.end.isEqual(this.start))
 				|| (other.start.isAfter(this.end) || other.start.isEqual(this.end)));
 	}
+	
+	public boolean includes(LocalDateTime time){
+		return (time.isEqual(start) || time.isAfter(start)) && time.isBefore(end);
+	}
 
 	@Override
 	public String toString() {

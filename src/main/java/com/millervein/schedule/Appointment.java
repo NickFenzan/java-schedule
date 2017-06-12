@@ -9,6 +9,11 @@ public class Appointment {
 	private TimePeriod timePeriod;
 	private Patient patient;
 	private ResourceUsageList staffUsage;
+	
+	public Appointment(AppointmentType appointmentType, LocalDateTime start) {
+		this(appointmentType, start, null);
+	}
+
 
 	public Appointment(AppointmentType appointmentType, LocalDateTime start, Patient patient) {
 		this.id = UUID.randomUUID();
