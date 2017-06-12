@@ -24,7 +24,7 @@ public class AppointmentGenerator {
 		List<Appointment> appointments = new ArrayList<Appointment>();
 		for (LocalDateTime iterTime = LocalDateTime.now().with(options.startTime); iterTime
 				.isBefore(LocalDateTime.now().with(options.endTime)); iterTime = iterTime.plus(iterDuration)) {
-			appointments.add(new Appointment(type, iterTime, new Patient()));
+			appointments.add(new Appointment(type, iterTime));
 		}
 		return appointments;
 	}
@@ -42,7 +42,7 @@ public class AppointmentGenerator {
 			for (AppointmentType apptType : this.appointmentTypes) {
 				AppointmentList slotAppointments = new AppointmentList();
 				while (slotAppointments.getConcurrencyByStaffType("Physician") < this.options.physicianLimit && slotAppointments.getConcurrencyByStaffType("Nurse") < this.options.physicianLimit) {
-					slotAppointments.add(new Appointment(apptType, iterTime, new Patient()));
+					slotAppointments.add(new Appointment(apptType, iterTime));
 				}
 				List<AppointmentList> toAdd = new ArrayList<AppointmentList>();
 				for(AppointmentList solutionSet : solutionSets){

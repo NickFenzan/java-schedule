@@ -3,12 +3,13 @@ package com.millervein.schedule;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.HashMultiset;
@@ -17,34 +18,36 @@ import com.google.common.collect.Multiset;
 public class Main {
 
 	public static void main(String[] args) throws Exception {
-		List<LocalDateTime> timeRange = timeRange();
-		List<AppointmentType> appointmentTypes = appointmentTypes();
+		SortedSet<LocalDateTime> timeRange = timeRange();
+		Set<AppointmentType> appointmentTypes = appointmentTypes();
 		Map<String, Integer> staffLimits = staffLimits();
 
-		List<List<Appointment>> appointmentSets = solutionsForTimesAndAppointmentTypes(timeRange, appointmentTypes,
+		Set<Multiset<Appointment>> appointmentSets = solutionsForTimesAndAppointmentTypes(timeRange, appointmentTypes,
 				staffLimits);
 
-		Integer i = 1;
-		for(List<Appointment> solution : appointmentSets){
-			System.out.println("Solution " + i + ":");
-			for(Appointment appointment : solution){
-				System.out.println(appointment.getAppointmentType().getName() + ": " + appointment.getTimePeriod().getStart().format(DateTimeFormatter.ISO_LOCAL_TIME));
-			}
-			i++;
-		}
-		
-		// List<List<Appointment>> appointmentSets =
-		// solutionsForTimeAndAppointmentTypes(timeRange.get(0),
-		// appointmentTypes, staffLimits);
+		Integer solutionCount = appointmentSets.size();
+		Integer maxAppointments = appointmentSets.stream().map(s -> s.size()).reduce(0, (a, b) -> b > a ? b : a);
+		Set<Multiset<Appointment>> longestSolutions = appointmentSets.stream().filter(s -> s.size() == maxAppointments)
+				.collect(Collectors.toSet());
+		Integer filteredSolutionCount = longestSolutions.size();
 
-//		appointmentSets = filterEmptySolutions(appointmentSets);
+		// Integer i = 1;
+		// for(Multiset<Appointment> solution : appointmentSets){
+		// System.out.println("Solution " + i + ":" + " - " + solution.size());
+		// for(Appointment appointment : solution){
+		// System.out.println(appointment.getAppointmentType().getName() + ": "
+		// +
+		// appointment.getTimePeriod().getStart().format(DateTimeFormatter.ISO_LOCAL_TIME));
+		// }
+		// i++;
+		// }
 
-//		for (List<Appointment> appointments : appointmentSets) {
-//			System.out.println(appointments);
-//			System.out.println(staffTypeUsage(appointments, "Nurse"));
-//		}
-
-//		printUniqueAppointmentTypeCombos(appointmentSets);
+		System.out.println("maxAppointments");
+		System.out.println(maxAppointments);
+		System.out.println("solutionCount");
+		System.out.println(solutionCount);
+		System.out.println("filteredSolutionCount");
+		System.out.println(filteredSolutionCount);
 
 	}
 
@@ -82,40 +85,39 @@ public class Main {
 	 * @param staffLimits
 	 * @return
 	 */
-	private static List<List<Appointment>> solutionsForTimesAndAppointmentTypes(List<LocalDateTime> times,
-			List<AppointmentType> appointmentTypes, Map<String, Integer> staffLimits) {
-		List<List<Appointment>> solutions = new ArrayList<List<Appointment>>();
-
+	private static Set<Multiset<Appointment>> solutionsForTimesAndAppointmentTypes(SortedSet<LocalDateTime> times,
+			Set<AppointmentType> appointmentTypes, Map<String, Integer> staffLimits) {
+		Set<Multiset<Appointment>> solutions = new HashSet<Multiset<Appointment>>();
 		for (LocalDateTime time : times) {
-			List<List<Appointment>> timeSolutions = solutionsForTimeAndAppointmentTypes(time, appointmentTypes,
+			Set<Multiset<Appointment>> timeSolutions = solutionsForTimeAndAppointmentTypes(time, appointmentTypes,
 					staffLimits);
 			solutions = mergeSolutionLists(solutions, timeSolutions, staffLimits);
-			Integer maxAppointments = solutions.stream().map(s->s.size()).max(Integer::max).orElse(0);
-			solutions = solutions.stream().filter(s -> s.size()==maxAppointments).collect(Collectors.toList());
-//			Integer i = 1;
-//			for(List<Appointment> solution : solutions){
-//				System.out.println("Solution " + i + ":");
-//				for(Appointment appointment : solution){
-//					System.out.println(appointment.getAppointmentType().getName() + ": " + appointment.getTimePeriod().getStart().format(DateTimeFormatter.ISO_LOCAL_TIME));
-//					i++;
-//				}
-//			}
-
+			// This is filtering solutions that don't look to be as good as some
+			// others. This prevents from us going down an exponential amount of
+			// blind alleys.
+			// Doing this every pass seems to be fine so long as the times are
+			// in order. (Which they are due to the sorted set
+			solutions = filterSuboptimalSolutions(solutions);
 		}
 		return solutions;
 	}
 
-	private static List<List<Appointment>> mergeSolutionLists(List<List<Appointment>> source,
-			List<List<Appointment>> toAdd, Map<String, Integer> staffLimits) {
-		List<List<Appointment>> merged = new ArrayList<List<Appointment>>();
+	private static Set<Multiset<Appointment>> filterSuboptimalSolutions(Set<Multiset<Appointment>> solutions) {
+		Integer maxAppointments = solutions.stream().map(s -> s.size()).reduce(0, (a, b) -> b > a ? b : a);
+		return solutions.stream().filter(s -> s.size() == maxAppointments).collect(Collectors.toSet());
+	}
+
+	private static Set<Multiset<Appointment>> mergeSolutionLists(Set<Multiset<Appointment>> source,
+			Set<Multiset<Appointment>> toAdd, Map<String, Integer> staffLimits) {
+		Set<Multiset<Appointment>> merged = new HashSet<Multiset<Appointment>>();
 		if (source.isEmpty()) {
 			return toAdd;
 		}
-		for (List<Appointment> sourceSolution : source) {
+		for (Multiset<Appointment> sourceSolution : source) {
 			// If you want to keep "incomplete" solutions uncomment this
 			// merged.add(sourceSolution);
-			for (List<Appointment> toAddSolution : toAdd) {
-				List<Appointment> tempSolution = new ArrayList<Appointment>(sourceSolution);
+			for (Multiset<Appointment> toAddSolution : toAdd) {
+				Multiset<Appointment> tempSolution = HashMultiset.create(sourceSolution);
 				tempSolution.addAll(toAddSolution);
 				if (validAppointmentListCheck(tempSolution, staffLimits)) {
 					merged.add(tempSolution);
@@ -135,11 +137,11 @@ public class Main {
 	 * @param maxConcurrent
 	 * @return
 	 */
-	private static List<List<Appointment>> solutionsForTimeAndAppointmentTypes(LocalDateTime time,
-			List<AppointmentType> appointmentTypes, Map<String, Integer> staffLimits) {
+	private static Set<Multiset<Appointment>> solutionsForTimeAndAppointmentTypes(LocalDateTime time,
+			Set<AppointmentType> appointmentTypes, Map<String, Integer> staffLimits) {
 		Map<AppointmentType, Integer> maxConcurrent = maximumConcurrentAppointmentCountForAppointmentTypes(time,
 				appointmentTypes, staffLimits);
-		List<List<Appointment>> solutions = new ArrayList<List<Appointment>>();
+		Set<Multiset<Appointment>> solutions = new HashSet<Multiset<Appointment>>();
 		for (AppointmentType appointmentType : appointmentTypes) {
 			Integer limit = maxConcurrent.get(appointmentType);
 			solutions = addValidAppointmentsToSolutionsByAppointmentTypeAndTime(solutions, appointmentType, limit, time,
@@ -162,14 +164,14 @@ public class Main {
 	 * @param staffLimits
 	 * @return
 	 */
-	private static List<List<Appointment>> addValidAppointmentsToSolutionsByAppointmentTypeAndTime(
-			List<List<Appointment>> solutions, AppointmentType appointmentType, Integer limit, LocalDateTime time,
+	private static Set<Multiset<Appointment>> addValidAppointmentsToSolutionsByAppointmentTypeAndTime(
+			Set<Multiset<Appointment>> solutions, AppointmentType appointmentType, Integer limit, LocalDateTime time,
 			Map<String, Integer> staffLimits) {
-		List<List<Appointment>> newSolutions = new ArrayList<List<Appointment>>(solutions);
+		Set<Multiset<Appointment>> newSolutions = new HashSet<Multiset<Appointment>>(solutions);
 		if (solutions.isEmpty()) {
-			solutions.add(new ArrayList<Appointment>());
+			solutions.add(HashMultiset.create());
 		}
-		for (List<Appointment> existingSolution : solutions) {
+		for (Multiset<Appointment> existingSolution : solutions) {
 			appendMultipleValidAppointmentsToSolutionBasedOnLimit(time, appointmentType, limit, staffLimits,
 					existingSolution, newSolutions);
 		}
@@ -189,7 +191,7 @@ public class Main {
 	 */
 	private static void appendMultipleValidAppointmentsToSolutionBasedOnLimit(LocalDateTime time,
 			AppointmentType appointmentType, Integer limit, Map<String, Integer> staffLimits,
-			List<Appointment> existingSolution, List<List<Appointment>> newSolutions) {
+			Multiset<Appointment> existingSolution, Set<Multiset<Appointment>> newSolutions) {
 		for (Integer i = limit; i >= 0; i = i - 1) {
 			appendMultipleValidAppointmentsToSolution(time, appointmentType, i, staffLimits, existingSolution,
 					newSolutions);
@@ -208,9 +210,9 @@ public class Main {
 	 * @param newSolutions
 	 */
 	private static void appendMultipleValidAppointmentsToSolution(LocalDateTime time, AppointmentType appointmentType,
-			Integer appointmentCount, Map<String, Integer> staffLimits, List<Appointment> existingSolution,
-			List<List<Appointment>> newSolutions) {
-		List<Appointment> testSolution = new ArrayList<Appointment>(existingSolution);
+			Integer appointmentCount, Map<String, Integer> staffLimits, Multiset<Appointment> existingSolution,
+			Set<Multiset<Appointment>> newSolutions) {
+		Multiset<Appointment> testSolution = HashMultiset.create(existingSolution);
 		for (Integer j = appointmentCount; j > 0; j = j - 1) {
 			testSolution.add(new Appointment(appointmentType, time));
 		}
@@ -235,7 +237,7 @@ public class Main {
 	 * @return
 	 */
 	private static Map<AppointmentType, Integer> maximumConcurrentAppointmentCountForAppointmentTypes(
-			LocalDateTime time, List<AppointmentType> appointmentTypes, Map<String, Integer> staffLimits) {
+			LocalDateTime time, Set<AppointmentType> appointmentTypes, Map<String, Integer> staffLimits) {
 		Map<AppointmentType, Integer> maxConcurrent = new HashMap<AppointmentType, Integer>();
 		for (AppointmentType appointmentType : appointmentTypes) {
 			maxConcurrent.put(appointmentType, maximumConcurrentAppointmentCount(time, appointmentType, staffLimits));
@@ -254,16 +256,17 @@ public class Main {
 	 */
 	private static Integer maximumConcurrentAppointmentCount(LocalDateTime time, AppointmentType appointmentType,
 			Map<String, Integer> staffLimits) {
-		List<Appointment> appointments = new ArrayList<Appointment>();
-		for (List<Appointment> uncheckedAppointments = new ArrayList<Appointment>(
-				appointments); validAppointmentListCheck(uncheckedAppointments, time,
-						staffLimits); uncheckedAppointments.add(new Appointment(appointmentType, time))) {
-			appointments = new ArrayList<Appointment>(uncheckedAppointments);
+		Multiset<Appointment> appointments = HashMultiset.create();
+		for (Multiset<Appointment> uncheckedAppointments = HashMultiset.create(appointments); validAppointmentListCheck(
+				uncheckedAppointments, time,
+				staffLimits); uncheckedAppointments.add(new Appointment(appointmentType, time))) {
+			appointments = HashMultiset.create(uncheckedAppointments);
 		}
 		return appointments.size();
 	}
 
-	private static boolean validAppointmentListCheck(List<Appointment> appointments, Map<String, Integer> staffLimits) {
+	private static boolean validAppointmentListCheck(Multiset<Appointment> appointments,
+			Map<String, Integer> staffLimits) {
 		for (Map.Entry<String, Integer> staffLimit : staffLimits.entrySet()) {
 			if (!validAppointmentListCheck(appointments, staffLimit.getKey(), staffLimit.getValue()))
 				return false;
@@ -280,7 +283,7 @@ public class Main {
 	 * @param staffLimits
 	 * @return
 	 */
-	private static boolean validAppointmentListCheck(List<Appointment> appointments, LocalDateTime time,
+	private static boolean validAppointmentListCheck(Multiset<Appointment> appointments, LocalDateTime time,
 			Map<String, Integer> staffLimits) {
 		for (Map.Entry<String, Integer> staffLimit : staffLimits.entrySet()) {
 			if (!validAppointmentListCheck(appointments, time, staffLimit.getKey(), staffLimit.getValue()))
@@ -299,12 +302,12 @@ public class Main {
 	 * @param staffLimit
 	 * @return
 	 */
-	private static boolean validAppointmentListCheck(List<Appointment> appointments, LocalDateTime time,
+	private static boolean validAppointmentListCheck(Multiset<Appointment> appointments, LocalDateTime time,
 			String staffType, Integer staffLimit) {
 		return staffTypeUsage(appointments, time, staffType) <= staffLimit;
 	}
 
-	private static boolean validAppointmentListCheck(List<Appointment> appointments, String staffType,
+	private static boolean validAppointmentListCheck(Multiset<Appointment> appointments, String staffType,
 			Integer staffLimit) {
 		return staffTypeUsage(appointments, staffType) <= staffLimit;
 	}
@@ -317,7 +320,7 @@ public class Main {
 	 * @param staffType
 	 * @return
 	 */
-	private static Integer staffTypeUsage(List<Appointment> appointments, LocalDateTime time, String staffType) {
+	private static Integer staffTypeUsage(Multiset<Appointment> appointments, LocalDateTime time, String staffType) {
 		Integer usageCount = 0;
 		for (Appointment appointment : appointments) {
 			ResourceUsageList staffUsages = appointment.getStaffUsage().getStaffTypeUsageList(staffType);
@@ -326,7 +329,7 @@ public class Main {
 		return usageCount;
 	}
 
-	private static Integer staffTypeUsage(List<Appointment> appointments, String staffType) {
+	private static Integer staffTypeUsage(Multiset<Appointment> appointments, String staffType) {
 		Integer usageCount = 0;
 		try {
 			LocalDateTime earliestTime = appointments.stream().map(a -> a.getStaffUsage().earliestUsage())
@@ -337,7 +340,7 @@ public class Main {
 					.orElseThrow(() -> new IllegalStateException("List didn't have an latest time"));
 			Duration interval = appointments.stream().map(a -> a.getStaffUsage().maximumComprehensiveInterval())
 					.min((dur1, dur2) -> dur1.compareTo(dur2)).orElseThrow(() -> new IllegalStateException());
-			List<LocalDateTime> appointmentResourceUseageTimeRange = generateTimeRange(earliestTime, latestTime,
+			Set<LocalDateTime> appointmentResourceUseageTimeRange = generateTimeRange(earliestTime, latestTime,
 					interval);
 			for (LocalDateTime time : appointmentResourceUseageTimeRange) {
 				Integer timeUsage = staffTypeUsage(appointments, time, staffType);
@@ -374,13 +377,13 @@ public class Main {
 	 */
 	private static Map<String, Integer> staffLimits() {
 		Map<String, Integer> limits = new HashMap<String, Integer>();
-		limits.put("Nurse", 3);
-		limits.put("Physician", 3);
+		limits.put("Nurse", 1);
+		limits.put("Physician", 1);
 		return limits;
 	}
 
-	private static List<LocalDateTime> generateTimeRange(LocalDateTime start, LocalDateTime end, Duration interval) {
-		List<LocalDateTime> timeRange = new ArrayList<LocalDateTime>();
+	private static SortedSet<LocalDateTime> generateTimeRange(LocalDateTime start, LocalDateTime end, Duration interval) {
+		SortedSet<LocalDateTime> timeRange = new TreeSet<LocalDateTime>();
 		for (LocalDateTime iterTime = start; iterTime.isBefore(end); iterTime = iterTime.plus(interval)) {
 			timeRange.add(iterTime);
 		}
@@ -392,9 +395,9 @@ public class Main {
 	 * 
 	 * @return
 	 */
-	private static List<LocalDateTime> timeRange() {
+	private static SortedSet<LocalDateTime> timeRange() {
 		LocalDateTime start = LocalDateTime.now().with(LocalTime.of(8, 0));
-		LocalDateTime end = LocalDateTime.now().with(LocalTime.of(9, 0));
+		LocalDateTime end = LocalDateTime.now().with(LocalTime.of(17, 30));
 		Duration interval = Duration.ofMinutes(15);
 		return generateTimeRange(start, end, interval);
 	}
@@ -428,8 +431,8 @@ public class Main {
 	 * 
 	 * @return
 	 */
-	public static List<AppointmentType> appointmentTypes() {
-		ArrayList<AppointmentType> appointmentTypes = new ArrayList<AppointmentType>();
+	public static Set<AppointmentType> appointmentTypes() {
+		Set<AppointmentType> appointmentTypes = new HashSet<AppointmentType>();
 		appointmentTypes.add(nurseHeavy());
 		appointmentTypes.add(physicianHeavy());
 		return appointmentTypes;
