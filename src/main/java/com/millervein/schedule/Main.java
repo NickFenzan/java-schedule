@@ -3,6 +3,7 @@ package com.millervein.schedule;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,23 +32,23 @@ public class Main {
 				.collect(Collectors.toSet());
 		Integer filteredSolutionCount = longestSolutions.size();
 
-		// Integer i = 1;
-		// for(Multiset<Appointment> solution : appointmentSets){
-		// System.out.println("Solution " + i + ":" + " - " + solution.size());
-		// for(Appointment appointment : solution){
-		// System.out.println(appointment.getAppointmentType().getName() + ": "
-		// +
-		// appointment.getTimePeriod().getStart().format(DateTimeFormatter.ISO_LOCAL_TIME));
-		// }
-		// i++;
-		// }
+		Integer i = 1;
+		for (Multiset<Appointment> solution : appointmentSets) {
+			System.out.println("Solution " + i + ":" + " - " + solution.size());
+			Main.validAppointmentListCheck(solution, staffLimits);
+			for (Appointment appointment : solution) {
+				System.out.println(appointment.getAppointmentType().getName() + "|"
+						+ appointment.getTimePeriod().getStart().format(DateTimeFormatter.ISO_LOCAL_TIME));
+			}
+			i++;
+		}
 
-		System.out.println("maxAppointments");
-		System.out.println(maxAppointments);
-		System.out.println("solutionCount");
-		System.out.println(solutionCount);
-		System.out.println("filteredSolutionCount");
-		System.out.println(filteredSolutionCount);
+		 System.out.println("maxAppointments");
+		 System.out.println(maxAppointments);
+		 System.out.println("solutionCount");
+		 System.out.println(solutionCount);
+		 System.out.println("filteredSolutionCount");
+		 System.out.println(filteredSolutionCount);
 
 	}
 
@@ -338,8 +339,14 @@ public class Main {
 			LocalDateTime latestTime = appointments.stream().map(a -> a.getStaffUsage().latestUsage())
 					.max((time1, time2) -> time1.compareTo(time2))
 					.orElseThrow(() -> new IllegalStateException("List didn't have an latest time"));
-			Duration interval = appointments.stream().map(a -> a.getStaffUsage().maximumComprehensiveInterval())
-					.min((dur1, dur2) -> dur1.compareTo(dur2)).orElseThrow(() -> new IllegalStateException());
+			// This is a potential place for optimization. It could use a larger
+			// interval than 1 minute in some cases, but figuring out what that
+			// is and when can be tricky
+			// Duration interval = appointments.stream().map(a ->
+			// a.getStaffUsage().maximumComprehensiveInterval())
+			// .min((dur1, dur2) -> dur1.compareTo(dur2)).orElseThrow(() -> new
+			// IllegalStateException());
+			Duration interval = Duration.ofMinutes(1);
 			Set<LocalDateTime> appointmentResourceUseageTimeRange = generateTimeRange(earliestTime, latestTime,
 					interval);
 			for (LocalDateTime time : appointmentResourceUseageTimeRange) {
@@ -382,7 +389,8 @@ public class Main {
 		return limits;
 	}
 
-	private static SortedSet<LocalDateTime> generateTimeRange(LocalDateTime start, LocalDateTime end, Duration interval) {
+	private static SortedSet<LocalDateTime> generateTimeRange(LocalDateTime start, LocalDateTime end,
+			Duration interval) {
 		SortedSet<LocalDateTime> timeRange = new TreeSet<LocalDateTime>();
 		for (LocalDateTime iterTime = start; iterTime.isBefore(end); iterTime = iterTime.plus(interval)) {
 			timeRange.add(iterTime);
@@ -397,7 +405,7 @@ public class Main {
 	 */
 	private static SortedSet<LocalDateTime> timeRange() {
 		LocalDateTime start = LocalDateTime.now().with(LocalTime.of(8, 0));
-		LocalDateTime end = LocalDateTime.now().with(LocalTime.of(17, 30));
+		LocalDateTime end = LocalDateTime.now().with(LocalTime.of(17, 0));
 		Duration interval = Duration.ofMinutes(15);
 		return generateTimeRange(start, end, interval);
 	}

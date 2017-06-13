@@ -44,7 +44,13 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 			while (iter.hasNext()) {
 				ResourceUsage next = iter.peek();
 				Duration gap = Duration.between(current.getTimePeriod().getEnd(), next.getTimePeriod().getStart());
-				smallestGap = (gap.compareTo(Duration.ZERO) > 0 && gap.compareTo(smallestGap) < 0) ? gap : smallestGap;
+				if(gap.compareTo(Duration.ZERO) > 0){
+					if (smallestGap == null){
+						smallestGap = gap;
+					} else if (gap.compareTo(smallestGap) < 0){
+						smallestGap = gap;
+					}
+				}
 				iter.next();
 			}
 		}
@@ -56,26 +62,25 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 	}
 
 	public Duration maximumComprehensiveInterval() {
-		Duration smallestDuration = smallestDuration();
-		Duration smallestGap = smallestGap();
-		if(smallestDuration != null && smallestGap != null){
-			long gcdMins = gcd(smallestDuration.toMinutes(), smallestGap.toMinutes());
-			return Duration.ofMinutes(gcdMins);
-		}else if (smallestDuration != null){
-			return smallestDuration;
-		}else if (smallestGap != null){
-			return smallestGap;
+		Duration smallestDifferenceBetweenResourceStart = null;
+		this.sortByStartTime();
+		PeekingIterator<ResourceUsage> iter = Iterators.peekingIterator(this.iterator());
+		while (iter.hasNext()) {
+			ResourceUsage current = iter.next();
+			while (iter.hasNext()) {
+				ResourceUsage next = iter.peek();
+				Duration gap = Duration.between(current.getTimePeriod().getStart(), next.getTimePeriod().getStart());
+				if(gap.compareTo(Duration.ZERO) > 0){
+					if (smallestDifferenceBetweenResourceStart == null){
+						smallestDifferenceBetweenResourceStart = gap;
+					} else if (gap.compareTo(smallestDifferenceBetweenResourceStart) < 0){
+						smallestDifferenceBetweenResourceStart = gap;
+					}
+				}
+				iter.next();
+			}
 		}
-		return null;
-	}
-
-	private static long gcd(long a, long b) {
-		while (b > 0) {
-			long temp = b;
-			b = a % b; // % is remainder
-			a = temp;
-		}
-		return a;
+		return smallestDifferenceBetweenResourceStart;
 	}
 
 	public ResourceUsageList getStaffTypeUsageList(String staffType) {
