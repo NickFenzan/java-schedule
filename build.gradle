@@ -7,5 +7,11 @@ targetCompatibility = 1.8
 
 mainClassName = "com.millervein.schedule.Main"
 
+repositories {
+    jcenter()
+}
+
 dependencies {
+	compile 'com.google.inject:guice:4.1.0'
+    compile 'com.google.guava:guava:22.0'
 }

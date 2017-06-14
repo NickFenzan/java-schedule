@@ -3,7 +3,7 @@ package com.millervein.schedule;
 import java.time.LocalDateTime;
 
 public class ResourceUsage {
-	private String resourceType;
+	private ResourceType resourceType;
 	private TimePeriod timePeriod;
 
 	public ResourceUsage(LocalDateTime appointmentStart, ResourceUsageTemplate template){
@@ -11,13 +11,13 @@ public class ResourceUsage {
 		this.timePeriod = template.timePeriodAt(appointmentStart);
 	}
 	
-	public ResourceUsage(String resourceType, TimePeriod timePeriod) {
+	public ResourceUsage(ResourceType resourceType, TimePeriod timePeriod) {
 		super();
 		this.resourceType = resourceType;
 		this.timePeriod = timePeriod;
 	}
 
-	public String getResourceType() {
+	public ResourceType getResourceType() {
 		return resourceType;
 	}
 
