@@ -1,20 +1,19 @@
 package com.millervein.schedule;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class Appointment {
 	//This is only in here to make hash and equals easier than it would be for timePeriod
 	private LocalDateTime start;
 	private AppointmentType appointmentType;
 	private TimePeriod timePeriod;
-	private ResourceUsageList staffUsage;
+	private ResourceUsageList resourceUsage;
 
 	public Appointment(AppointmentType appointmentType, LocalDateTime start) {
 		this.appointmentType = appointmentType;
 		this.start = start;
 		this.timePeriod = appointmentType.timePeriodAt(start);
-		this.staffUsage = this.appointmentType.getStaffUsageTemplate().toResourceUsageList(start);
+		this.resourceUsage = this.appointmentType.getResourceUsageTemplate().toResourceUsageList(start);
 	}
 
 	public AppointmentType getAppointmentType() {
@@ -29,8 +28,8 @@ public class Appointment {
 		return timePeriod;
 	}
 
-	public ResourceUsageList getStaffUsage() {
-		return staffUsage;
+	public ResourceUsageList getResourceUsage() {
+		return resourceUsage;
 	}
 
 	@Override
@@ -66,7 +65,8 @@ public class Appointment {
 
 	@Override
 	public String toString() {
-		return "Appointment [appointmentType=" + appointmentType + ", timePeriod=" + timePeriod + "]";
+		return appointmentType.getName() + " - " + timePeriod.getStart().toString();
+//		return "Appointment [appointmentType=" + appointmentType + ", timePeriod=" + timePeriod + "]";
 	}
 
 }

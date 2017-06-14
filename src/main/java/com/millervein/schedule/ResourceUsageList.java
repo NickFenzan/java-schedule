@@ -44,10 +44,10 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 			while (iter.hasNext()) {
 				ResourceUsage next = iter.peek();
 				Duration gap = Duration.between(current.getTimePeriod().getEnd(), next.getTimePeriod().getStart());
-				if(gap.compareTo(Duration.ZERO) > 0){
-					if (smallestGap == null){
+				if (gap.compareTo(Duration.ZERO) > 0) {
+					if (smallestGap == null) {
 						smallestGap = gap;
-					} else if (gap.compareTo(smallestGap) < 0){
+					} else if (gap.compareTo(smallestGap) < 0) {
 						smallestGap = gap;
 					}
 				}
@@ -61,6 +61,24 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 		this.sort((a, b) -> a.getTimePeriod().getStart().compareTo(b.getTimePeriod().getStart()));
 	}
 
+	/**
+	 * Counts the amount of resources in the list that overlap a given time
+	 * 
+	 * @param staffUsages
+	 * @param time
+	 * @return
+	 */
+	public Integer resourceUsageCountAtTime(LocalDateTime time) {
+		Integer usageCount = 0;
+		for (ResourceUsage staffUsage : this) {
+			TimePeriod usagePeriod = staffUsage.getTimePeriod();
+			if (usagePeriod.includes(time)) {
+				usageCount++;
+			}
+		}
+		return usageCount;
+	}
+
 	public Duration maximumComprehensiveInterval() {
 		Duration smallestDifferenceBetweenResourceStart = null;
 		this.sortByStartTime();
@@ -70,10 +88,10 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 			while (iter.hasNext()) {
 				ResourceUsage next = iter.peek();
 				Duration gap = Duration.between(current.getTimePeriod().getStart(), next.getTimePeriod().getStart());
-				if(gap.compareTo(Duration.ZERO) > 0){
-					if (smallestDifferenceBetweenResourceStart == null){
+				if (gap.compareTo(Duration.ZERO) > 0) {
+					if (smallestDifferenceBetweenResourceStart == null) {
 						smallestDifferenceBetweenResourceStart = gap;
-					} else if (gap.compareTo(smallestDifferenceBetweenResourceStart) < 0){
+					} else if (gap.compareTo(smallestDifferenceBetweenResourceStart) < 0) {
 						smallestDifferenceBetweenResourceStart = gap;
 					}
 				}
@@ -83,13 +101,13 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 		return smallestDifferenceBetweenResourceStart;
 	}
 
-	public ResourceUsageList getStaffTypeUsageList(String staffType) {
+	public ResourceUsageList getResourceTypeUsageList(ResourceType staffType) {
 		return new ResourceUsageList(
 				this.stream().filter(resUse -> resUse.getResourceType() == staffType).collect(Collectors.toList()));
 	}
 
-	public Integer getStaffTypeConcurrency(String staffType) {
-		ResourceUsageList staffTypeList = this.getStaffTypeUsageList(staffType);
+	public Integer getResourceTypeConcurrency(ResourceType staffType) {
+		ResourceUsageList staffTypeList = this.getResourceTypeUsageList(staffType);
 		Integer highestOverlap = 0;
 		for (ResourceUsage staffUsage : staffTypeList) {
 			Integer currentOverlap = 0;

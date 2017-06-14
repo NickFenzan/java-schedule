@@ -4,18 +4,18 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class ResourceUsageTemplate {
-	private String resourceType;
+	private ResourceType resourceType;
 	private Duration duration;
 	private Duration appointmentStartOffset;
 
-	public ResourceUsageTemplate(String resourceType, Duration appointmentStartOffset, Duration duration) {
+	public ResourceUsageTemplate(ResourceType resourceType, Duration appointmentStartOffset, Duration duration) {
 		super();
 		this.resourceType = resourceType;
 		this.appointmentStartOffset = appointmentStartOffset;
 		this.duration = duration;
 	}
 
-	public String getResourceType() {
+	public ResourceType getResourceType() {
 		return resourceType;
 	}
 

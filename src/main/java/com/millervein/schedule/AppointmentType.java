@@ -5,28 +5,45 @@ import java.time.LocalDateTime;
 
 public class AppointmentType {
 	private String name;
-	private ResourceUsageTemplateList staffUsageTemplate;
+	private ResourceUsageTemplateList resourceUsageTemplate;
 
-	public AppointmentType(String name, ResourceUsageTemplateList staffUsageTemplate) {
-		super();
+	public AppointmentType(String name, ResourceUsageTemplateList resourceUsageTemplate) {
 		this.name = name;
-		this.staffUsageTemplate = staffUsageTemplate;
+		this.resourceUsageTemplate = resourceUsageTemplate;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public ResourceUsageTemplateList getStaffUsageTemplate() {
-		return staffUsageTemplate;
+	public ResourceUsageTemplateList getResourceUsageTemplate() {
+		return resourceUsageTemplate;
 	}
 
 	public TimePeriod timePeriodAt(LocalDateTime datetime) {
-		return new TimePeriod(datetime, this.staffUsageTemplate.getTotalDuration());
+		return new TimePeriod(datetime, this.resourceUsageTemplate.getTotalDuration());
 	}
 
 	public Duration getSmallestResourceDuration() {
-		return this.staffUsageTemplate.getSmallestDuration();
+		return this.resourceUsageTemplate.getSmallestDuration();
+	}
+	
+	/**
+	 * Returns the maximum number of appointments possible at a given time,
+	 * given its staff limits
+	 * 
+	 * @param time
+	 * @param appointmentType
+	 * @param staffLimits
+	 * @return
+	 */
+	public Integer maximumConcurrentAppointmentCount(ResourceTypeLimits resourceLimits) {
+		AppointmentList appointments = AppointmentList.create();
+		for (AppointmentList uncheckedAppointments = AppointmentList.create(appointments); uncheckedAppointments
+				.valid(resourceLimits); uncheckedAppointments.add(new Appointment(this, LocalDateTime.now()))) {
+			appointments = AppointmentList.create(uncheckedAppointments);
+		}
+		return appointments.size();
 	}
 
 	@Override
