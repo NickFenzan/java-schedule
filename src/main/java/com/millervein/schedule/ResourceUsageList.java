@@ -70,8 +70,8 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 	 */
 	public Integer resourceUsageCountAtTime(LocalDateTime time) {
 		Integer usageCount = 0;
-		for (ResourceUsage staffUsage : this) {
-			TimePeriod usagePeriod = staffUsage.getTimePeriod();
+		for (ResourceUsage resourceUsage : this) {
+			TimePeriod usagePeriod = resourceUsage.getTimePeriod();
 			if (usagePeriod.includes(time)) {
 				usageCount++;
 			}
@@ -102,8 +102,12 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 	}
 
 	public ResourceUsageList getResourceTypeUsageList(ResourceType staffType) {
-		return new ResourceUsageList(
-				this.stream().filter(resUse -> resUse.getResourceType() == staffType).collect(Collectors.toList()));
+		ResourceUsageList newList = new ResourceUsageList();
+		for(ResourceUsage resourceUsage : this){
+			if(resourceUsage.getResourceType().equals(staffType))
+				newList.add(resourceUsage);
+		}
+		return newList;
 	}
 
 	public Integer getResourceTypeConcurrency(ResourceType staffType) {

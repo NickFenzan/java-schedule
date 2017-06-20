@@ -30,17 +30,18 @@ public class SolutionSetGenerator {
 		for (LocalDateTime time : times) {
 			System.out.println(time);
 			SolutionSet timeSolutions = generateAppointmentsForTime(time);
-			System.out.println("Time Solutions");
-			System.out.println(timeSolutions.size());
+//			System.out.println("Time Solutions");
+//			System.out.println(timeSolutions.size());
 			solutions.combine(timeSolutions);
-			System.out.println("Combined Solutions");
-			System.out.println(solutions.size());
+//			System.out.println("Combined Solutions");
+//			System.out.println(solutions.size());
 			solutions.filterInvalid(this.resourceTypeLimits);
-			System.out.println("Filtered Invalid Solutions");
-			System.out.println(solutions.size());
-			System.out.println("Filtered Suboptimal Solutions");
-			solutions.filterSuboptimalSolutions();
-			System.out.println(solutions.size());
+//			System.out.println("Filtered Invalid Solutions");
+//			System.out.println(solutions.size());
+//			System.out.println("Filtered Suboptimal Solutions");
+			solutions.filterSuboptimalValue();
+			solutions.filterSuboptimalAppointmentCount();
+//			System.out.println(solutions.size());
 		}
 
 		return solutions;

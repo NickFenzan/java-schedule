@@ -1,15 +1,18 @@
 package com.millervein.schedule;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class AppointmentType {
 	private String name;
 	private ResourceUsageTemplateList resourceUsageTemplate;
+	private BigDecimal value;
 
-	public AppointmentType(String name, ResourceUsageTemplateList resourceUsageTemplate) {
+	public AppointmentType(String name, ResourceUsageTemplateList resourceUsageTemplate, BigDecimal value) {
 		this.name = name;
 		this.resourceUsageTemplate = resourceUsageTemplate;
+		this.value = value;
 	}
 
 	public String getName() {
@@ -20,6 +23,10 @@ public class AppointmentType {
 		return resourceUsageTemplate;
 	}
 
+	public BigDecimal getValue() {
+		return value;
+	}
+
 	public TimePeriod timePeriodAt(LocalDateTime datetime) {
 		return new TimePeriod(datetime, this.resourceUsageTemplate.getTotalDuration());
 	}
@@ -27,7 +34,7 @@ public class AppointmentType {
 	public Duration getSmallestResourceDuration() {
 		return this.resourceUsageTemplate.getSmallestDuration();
 	}
-	
+
 	/**
 	 * Returns the maximum number of appointments possible at a given time,
 	 * given its staff limits

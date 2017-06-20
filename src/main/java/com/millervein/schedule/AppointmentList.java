@@ -1,5 +1,6 @@
 package com.millervein.schedule;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -73,13 +74,22 @@ public class AppointmentList extends ForwardingMultiset<Appointment> {
 			for(Map.Entry<? extends ResourceType, Integer> resourceTypeLimitEntry : resourceLimitMap.entrySet()){
 				ResourceType resourceType = resourceTypeLimitEntry.getKey();
 				Integer resourceLimit = resourceTypeLimitEntry.getValue();
-				if (this.resourceTypeUsage(resourceType) > resourceLimit)
+				if (this.resourceTypeUsage(resourceType) > resourceLimit) {
+//					System.out.println("Not enough " + resourceType.toString() + "s");
 					return false;
+				}
 			}
 		}
 		return true;
 	}
 
+	public BigDecimal value(){
+		BigDecimal value = BigDecimal.ZERO;
+		for(Appointment appointment : delegate){
+			value = value.add(appointment.getValue());
+		}
+		return value;
+	}
 
 	public LocalDateTime earliestTime() {
 		return delegate.stream().map(a -> a.getResourceUsage().earliestUsage())

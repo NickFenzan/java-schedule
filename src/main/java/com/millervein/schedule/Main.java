@@ -1,5 +1,6 @@
 package com.millervein.schedule;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,7 +29,9 @@ public class Main {
 	 */
 	private static ResourceTypeLimitMap<StaffType> staffLimits() {
 		ResourceTypeLimitMap<StaffType> limits = ResourceTypeLimitMap.create();
-		limits.put(StaffType.NURSE, 1);
+		limits.put(StaffType.MEDTECH, 2);
+		limits.put(StaffType.ULTRASOUND, 2);
+		limits.put(StaffType.NURSE, 2);
 		limits.put(StaffType.PHYSICIAN, 1);
 		return limits;
 	}
@@ -40,67 +43,40 @@ public class Main {
 	 */
 	private static ResourceTypeLimitMap<RoomType> roomLimits() {
 		ResourceTypeLimitMap<RoomType> limits = ResourceTypeLimitMap.create();
-		limits.put(RoomType.CONSULT, 1);
-		limits.put(RoomType.PROCEDURE, 1);
+		limits.put(RoomType.CONSULT, 5);
+		limits.put(RoomType.PROCEDURE, 2);
 		return limits;
 	}
 
+	/**
+	 * Creates preset equipment limits
+	 * @return
+	 */
+	private static ResourceTypeLimitMap<EquipmentType> equipmentLimits() {
+		ResourceTypeLimitMap<EquipmentType> limits = ResourceTypeLimitMap.create();
+		limits.put(EquipmentType.ULTRASOUND, 5);
+		return limits;
+	}
+	
 	/**
 	 * Creates collection of preset limits
 	 * 
 	 * @return
 	 */
-	private static ResourceTypeLimits resourceTypeLimits() {
+ 	private static ResourceTypeLimits resourceTypeLimits() {
 		ResourceTypeLimits resourceTypeLimits = ResourceTypeLimits.create();
 		resourceTypeLimits.put(StaffType.class, staffLimits());
 		resourceTypeLimits.put(RoomType.class, roomLimits());
+		resourceTypeLimits.put(EquipmentType.class, equipmentLimits());
 		return resourceTypeLimits;
-	}
-
-	/**
-	 * Creates nurse heavy appointment type
-	 * 
-	 * @return
-	 */
-	private static AppointmentType nurseHeavy() {
-		ResourceUsageTemplateList rList = new ResourceUsageTemplateList();
-		rList.add(new ResourceUsageTemplate(StaffType.NURSE, Duration.ofMinutes(0), Duration.ofMinutes(30)));
-		rList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, Duration.ofMinutes(15), Duration.ofMinutes(15)));
-		rList.add(new ResourceUsageTemplate(RoomType.CONSULT, Duration.ZERO, Duration.ofMinutes(45)));
-		return new AppointmentType("Nurse Heavy", rList);
-	}
-
-	/**
-	 * Creates physician heavy appointment type
-	 * 
-	 * @return
-	 */
-	private static AppointmentType physicianHeavy() {
-		ResourceUsageTemplateList rList = new ResourceUsageTemplateList();
-		rList.add(new ResourceUsageTemplate(StaffType.NURSE, Duration.ofMinutes(0), Duration.ofMinutes(15)));
-		rList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, Duration.ofMinutes(15), Duration.ofMinutes(30)));
-		rList.add(new ResourceUsageTemplate(RoomType.CONSULT, Duration.ZERO, Duration.ofMinutes(45)));
-		return new AppointmentType("Physician Heavy", rList);
-	}
-
-	/**
-	 * Creates preset list of appointment types
-	 * 
-	 * @return
-	 */
-	private static AppointmentTypeSet appointmentTypes() {
-		AppointmentTypeSet appointmentTypes = AppointmentTypeSet.create();
-		appointmentTypes.add(nurseHeavy());
-		appointmentTypes.add(physicianHeavy());
-		return appointmentTypes;
 	}
 
 	public static void main(String[] args) throws Exception {
 		SortedSet<LocalDateTime> timeRange = timeRange();
 		ResourceTypeLimits resourceTypeLimits = resourceTypeLimits();
-		AppointmentTypeSet appointmentTypes = appointmentTypes();
+		AppointmentTypeSet appointmentTypes = AppointmentTypeSetBuilder.build();
 
-		timeRange = TimeRange.generateTimeRange(LocalDateTime.now().with(LocalTime.of(8, 0)), LocalDateTime.now().with(LocalTime.of(10, 00)), Duration.ofMinutes(15));
+		timeRange = TimeRange.generateTimeRange(LocalDateTime.now().with(LocalTime.of(8, 0)), LocalDateTime.now().with(LocalTime.of(17, 00)), Duration.ofMinutes(15));
 		
 		SolutionSetGenerator ag = new SolutionSetGenerator(appointmentTypes, resourceTypeLimits);
 		SolutionSet solutionSet = ag.generateAppointmentsForTimes(timeRange);
@@ -108,6 +84,7 @@ public class Main {
 		printSolutions(solutionSet);
 		printSolutionCount(solutionSet);
 		printMaxAppointments(solutionSet);
+		printMaxValue(solutionSet);
 	}
 
 	private static void printSolutionCount(SolutionSet solutionSet) {
@@ -121,11 +98,17 @@ public class Main {
 		System.out.println("");
 		System.out.println("Maximum Total Appointments: " + maxAppointments);
 	}
+	
+	private static void printMaxValue(SolutionSet solutionSet) {
+		BigDecimal maxValue = solutionSet.stream().map(s -> s.value()).reduce(new BigDecimal(0), (a, b) -> (b.compareTo(a) > 0) ? b : a);
+		System.out.println("");
+		System.out.println("Maximum Total Value: " + maxValue);
+	}
 
 	private static void printSolutions(SolutionSet solutionSet) {
 		Integer i = 1;
 		for (AppointmentList appointmentList : solutionSet) {
-			System.out.println("Solution " + i + ":" + " - " + appointmentList.size());
+			System.out.println("Solution " + i + ":" + " - " + appointmentList.value());
 			List<Appointment> appointments = appointmentList.stream()
 					.sorted((a, b) -> a.getTimePeriod().getStart().compareTo(b.getTimePeriod().getStart()))
 					.collect(Collectors.toList());

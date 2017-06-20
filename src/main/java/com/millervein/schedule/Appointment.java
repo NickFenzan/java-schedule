@@ -1,5 +1,6 @@
 package com.millervein.schedule;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Appointment {
@@ -30,6 +31,10 @@ public class Appointment {
 
 	public ResourceUsageList getResourceUsage() {
 		return resourceUsage;
+	}
+	
+	public BigDecimal getValue(){
+		return this.getAppointmentType().getValue();
 	}
 
 	@Override
