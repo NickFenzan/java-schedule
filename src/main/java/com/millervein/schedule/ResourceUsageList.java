@@ -1,80 +1,70 @@
 package com.millervein.schedule;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("serial")
-public class ResourceUsageList extends ArrayList<ResourceUsage> {
+import com.google.common.collect.ConcurrentHashMultiset;
+import com.google.common.collect.ForwardingMultiset;
+import com.google.common.collect.Multiset;
 
-	public ResourceUsageList() {
-		super();
+public class ResourceUsageList extends ForwardingMultiset<ResourceUsage> {
+	final Multiset<ResourceUsage> delegate;
+	
+	@Override
+	protected Multiset<ResourceUsage> delegate() {
+		return this.delegate;
 	}
 
-	public ResourceUsageList(Collection<? extends ResourceUsage> c) {
-		super(c);
-	}
-
-	public LocalDateTime earliestUsage() {
-		return this.stream().map(r -> r.getTimePeriod().getStart()).min((time1, time2) -> time1.compareTo(time2))
-				.orElseThrow(() -> new IllegalStateException());
-	}
-
-	public LocalDateTime latestUsage() {
-		return this.stream().map(r -> r.getTimePeriod().getEnd()).max((time1, time2) -> time1.compareTo(time2))
-				.orElseThrow(() -> new IllegalStateException());
-	}
-
-	public void add(ResourceType resourceType, TimePeriod timePeriod){
-		this.add(ResourceUsage.create(resourceType, timePeriod));
+	private ResourceUsageList() {
+		this.delegate = ConcurrentHashMultiset.create();
 	}
 	
+	private ResourceUsageList(Iterable<? extends ResourceUsage> elements) {
+		this.delegate = ConcurrentHashMultiset.create(elements);
+	}
+	
+	public static ResourceUsageList create(){
+		return new ResourceUsageList();
+	}
+	
+	public static ResourceUsageList create(Collection<? extends ResourceUsage> c){
+		return new ResourceUsageList(c);
+	}
+	
+	public static Collector<ResourceUsage, ?, ResourceUsageList> collector(){
+		return Collectors.toCollection(ResourceUsageList::create);
+	}
+	
+	public Optional<ResourceUsage> findEarliestUsage() {
+		return delegate.stream().reduce(ResourceUsage.earliest());
+	}
 
-	/**
-	 * Counts the amount of resources in the list that overlap a given time
-	 * 
-	 * @param staffUsages
-	 * @param time
-	 * @return
-	 */
+	public Optional<ResourceUsage> latestUsage() {
+		return delegate.stream().reduce(ResourceUsage.latest()); 
+	}
+
 	public Integer resourceUsageCountAtTime(LocalDateTime time) {
-		Integer usageCount = 0;
-		for (ResourceUsage resourceUsage : this) {
-			TimePeriod usagePeriod = resourceUsage.getTimePeriod();
-			if (usagePeriod.includes(time)) {
-				usageCount++;
-			}
-		}
-		return usageCount;
+		return delegate.stream().filter(ResourceUsage.includesTime(time)).mapToInt(a->1).sum();
+	}
+	
+	public ResourceUsageList filterResourceType(ResourceType resourceType){
+		return delegate.stream().filter(ResourceUsage.isResourceType(resourceType)).collect(collector());
+	}
+	
+	//This needs to be renamed/relocated
+	public static Function<ResourceUsage, Integer> maxConcurrency(Multiset<ResourceUsage> resourceList){
+		return resource -> resourceList.stream().filter(ResourceUsage.isResourceType(resource.getResourceType())).filter(a->a.overlaps(resource)).mapToInt(a->1).sum();
 	}
 
-	public ResourceUsageList getResourceTypeUsageList(ResourceType staffType) {
-		ResourceUsageList newList = new ResourceUsageList();
-		for(ResourceUsage resourceUsage : this){
-			if(resourceUsage.getResourceType().equals(staffType))
-				newList.add(resourceUsage);
-		}
-		return newList;
-	}
-
-	public Integer getResourceTypeConcurrency(ResourceType staffType) {
-		ResourceUsageList staffTypeList = this.getResourceTypeUsageList(staffType);
-		Integer highestOverlap = 0;
-		for (ResourceUsage staffUsage : staffTypeList) {
-			Integer currentOverlap = 0;
-			for (ResourceUsage otherStaffUsage : staffTypeList) {
-				if (staffUsage.getTimePeriod().overlaps(otherStaffUsage.getTimePeriod())) {
-					currentOverlap++;
-				}
-			}
-			highestOverlap = (currentOverlap > highestOverlap) ? currentOverlap : highestOverlap;
-		}
-		return highestOverlap;
+	public Integer getResourceTypeConcurrency(ResourceType resourceType) {
+		return delegate.stream().map(ResourceUsageList.maxConcurrency(delegate)).reduce(0, Integer::max);
 	}
 	
 	public Set<ResourceType> resourceTypes(){
@@ -115,5 +105,6 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 		}
 		return highestOverlap;
 	}
+
 
 }

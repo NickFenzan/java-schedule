@@ -2,6 +2,7 @@ package com.millervein.schedule;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.function.BinaryOperator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -51,6 +52,14 @@ public class TimePeriod {
 	public static TimePeriod withDuration(LocalDateTime start, Duration duration) {
 		return new TimePeriod(start, duration);
 	}
+	
+	public static BinaryOperator<TimePeriod> earliest(){
+		return (a,b)-> a.startsBefore(b) ? a : b;
+	}
+	
+	public static BinaryOperator<TimePeriod> latest(){
+		return (a,b)-> a.endsAfter(b) ? a : b;
+	}
 
 	public LocalDateTime getStart() {
 		return start;
@@ -79,6 +88,43 @@ public class TimePeriod {
 
 	public boolean includes(LocalDateTime time) {
 		return (time.isEqual(start) || time.isAfter(start)) && time.isBefore(end);
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((duration == null) ? 0 : duration.hashCode());
+		result = prime * result + ((end == null) ? 0 : end.hashCode());
+		result = prime * result + ((start == null) ? 0 : start.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		TimePeriod other = (TimePeriod) obj;
+		if (duration == null) {
+			if (other.duration != null)
+				return false;
+		} else if (!duration.equals(other.duration))
+			return false;
+		if (end == null) {
+			if (other.end != null)
+				return false;
+		} else if (!end.equals(other.end))
+			return false;
+		if (start == null) {
+			if (other.start != null)
+				return false;
+		} else if (!start.equals(other.start))
+			return false;
+		return true;
 	}
 
 	@Override

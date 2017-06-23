@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class ResourceUsageTemplateList extends ArrayList<ResourceUsageTemplate> {
 
 	public ResourceUsageList toResourceUsageList(LocalDateTime appointmentStart) {
-		return new ResourceUsageList(this.stream().map(resUseTemp -> resUseTemp.toResourceUsage(appointmentStart))
+		return ResourceUsageList.create(this.stream().map(resUseTemp -> resUseTemp.toResourceUsage(appointmentStart))
 				.collect(Collectors.toList()));
 	}
 

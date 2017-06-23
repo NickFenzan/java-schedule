@@ -58,14 +58,14 @@ public class AppointmentList extends ForwardingMultiset<Appointment> {
 	private Integer resourceTypeUsageAtTime(ResourceType resourceType, LocalDateTime time) {
 		Integer usageCount = 0;
 		for (Appointment appointment : delegate) {
-			ResourceUsageList resourceUsages = appointment.getResourceUsage().getResourceTypeUsageList(resourceType);
+			ResourceUsageList resourceUsages = appointment.getResourceUsage().filterResourceType(resourceType);
 			usageCount += resourceUsages.resourceUsageCountAtTime(time);
 		}
 		return usageCount;
 	}
 
 	private Map<ResourceType, Integer> resourceTypeUsage(){
-		ResourceUsageList allResources = new ResourceUsageList();
+		ResourceUsageList allResources = ResourceUsageList.create();
 		for(Appointment appointment : delegate) {
 			allResources.addAll(appointment.getResourceUsage());
 		}
@@ -119,13 +119,15 @@ public class AppointmentList extends ForwardingMultiset<Appointment> {
 	}
 
 	public LocalDateTime earliestTime() {
-		return delegate.stream().map(a -> a.getResourceUsage().earliestUsage())
-				.min((time1, time2) -> time1.compareTo(time2)).orElse(null);
+		return null;
+//		return delegate.stream().map(a -> a.getResourceUsage().earliestUsage())
+//				.min((time1, time2) -> time1.compareTo(time2)).orElse(null);
 	}
 
 	public LocalDateTime latestTime() {
-		return delegate.stream().map(a -> a.getResourceUsage().latestUsage())
-				.max((time1, time2) -> time1.compareTo(time2)).orElse(null);
+		return null;
+//		return delegate.stream().map(a -> a.getResourceUsage().latestUsage())
+//				.max((time1, time2) -> time1.compareTo(time2)).orElse(null);
 	}
 
 }

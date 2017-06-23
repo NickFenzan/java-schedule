@@ -2,12 +2,15 @@ package com.millervein.schedule;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 public class TimePeriodTest {
+	Logger log = Logger.getGlobal();
+	
 	@Test(expected = NullPointerException.class)
 	public void nullStartTest() {
 		TimePeriod.withRange(null, LocalDateTime.now());
