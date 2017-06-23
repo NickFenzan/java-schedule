@@ -3,6 +3,7 @@ package com.millervein.schedule;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,6 +64,14 @@ public class AppointmentList extends ForwardingMultiset<Appointment> {
 		return usageCount;
 	}
 
+	private Map<ResourceType, Integer> resourceTypeUsage(){
+		ResourceUsageList allResources = new ResourceUsageList();
+		for(Appointment appointment : delegate) {
+			allResources.addAll(appointment.getResourceUsage());
+		}
+		return allResources.getResourceTypeConcurrency();
+	}
+	
 	public boolean valid(ResourceTypeLimits resourceLimits) {
 		//Loop through the different categories(Staff, rooms, equipment)
 		for (Map.Entry<Class<? extends ResourceType>, ResourceTypeLimitMap<? extends ResourceType>> resourceCategoryEntry : resourceLimits
@@ -82,8 +91,26 @@ public class AppointmentList extends ForwardingMultiset<Appointment> {
 		}
 		return true;
 	}
+	
+	private boolean resourceLimitsValid(ResourceTypeLimits resourceLimits) {
+		Map<ResourceType, Integer> resourceUsages = this.resourceTypeUsage();
+		for(java.util.Map.Entry<Class<? extends ResourceType>, ResourceTypeLimitMap<? extends ResourceType>> limit : resourceLimits.entrySet()){
+			
+		}
+		return true;
+	}
 
-	public BigDecimal value(){
+	public Map<AppointmentType, Integer> appointmentTypeUsage(){
+		Map<AppointmentType, Integer> typeUsage = new HashMap<AppointmentType, Integer>();
+		for(Appointment appointment : delegate){
+			AppointmentType type = appointment.getAppointmentType();
+			Integer currentTypeCount = typeUsage.getOrDefault(type, 0);
+			typeUsage.put(type, currentTypeCount + 1);
+		}
+		return typeUsage;
+	}
+	
+ 	public BigDecimal value(){
 		BigDecimal value = BigDecimal.ZERO;
 		for(Appointment appointment : delegate){
 			value = value.add(appointment.getValue());

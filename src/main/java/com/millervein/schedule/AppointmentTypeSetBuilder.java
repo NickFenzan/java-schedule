@@ -13,6 +13,7 @@ public class AppointmentTypeSetBuilder {
 		appointmentTypes.add(followUp3Month());
 		appointmentTypes.add(followUp6Month());
 		appointmentTypes.add(followUpYearly());
+		appointmentTypes.add(veinEraseLegs());
 		return appointmentTypes;
 	}
 
@@ -23,16 +24,16 @@ public class AppointmentTypeSetBuilder {
 		Duration ultrasoundTime = Duration.ofMinutes(45);
 		Duration nurseTime = Duration.ofMinutes(30);
 		Duration drTime = Duration.ofMinutes(30);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.MEDTECH, runningTimer, medTechTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.MEDTECH, medTechTime, runningTimer));
 		runningTimer = runningTimer.plus(medTechTime);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.ULTRASOUND, runningTimer, ultrasoundTime));
-		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.ULTRASOUND, runningTimer, ultrasoundTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.ULTRASOUND, ultrasoundTime, runningTimer));
+		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.ULTRASOUND, ultrasoundTime, runningTimer));
 		runningTimer = runningTimer.plus(ultrasoundTime);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.NURSE, runningTimer, nurseTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.NURSE, nurseTime, runningTimer));
 		runningTimer = runningTimer.plus(nurseTime);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, runningTimer, drTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, drTime, runningTimer));
 		runningTimer = runningTimer.plus(drTime);
-		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, Duration.ZERO, runningTimer));
+		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, runningTimer, Duration.ZERO));
 		
 		return new AppointmentType("New Patient", resourceUsageList, new BigDecimal(271.03));
 	}
@@ -43,14 +44,14 @@ public class AppointmentTypeSetBuilder {
 		Duration medTechTime = Duration.ofMinutes(15);
 		Duration ultrasoundTime = Duration.ofMinutes(45);
 		Duration drTime = Duration.ofMinutes(15);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.MEDTECH, runningTimer, medTechTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.MEDTECH, medTechTime, runningTimer));
 		runningTimer = runningTimer.plus(medTechTime);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.ULTRASOUND, runningTimer, ultrasoundTime));
-		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.ULTRASOUND, runningTimer, ultrasoundTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.ULTRASOUND, ultrasoundTime, runningTimer));
+		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.ULTRASOUND, ultrasoundTime, runningTimer));
 		runningTimer = runningTimer.plus(ultrasoundTime);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, runningTimer, drTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, drTime, runningTimer));
 		runningTimer = runningTimer.plus(drTime);
-		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, Duration.ZERO, runningTimer));
+		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, runningTimer, Duration.ZERO));
 		return resourceUsageList;
 	}
 	
@@ -69,9 +70,9 @@ public class AppointmentTypeSetBuilder {
 	private static AppointmentType followUpOneWeek() {
 		ResourceUsageTemplateList resourceUsageList = new ResourceUsageTemplateList();
 		Duration ultrasoundTime = Duration.ofMinutes(15);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.ULTRASOUND, Duration.ZERO, ultrasoundTime));
-		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.ULTRASOUND, Duration.ZERO, ultrasoundTime));
-		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, Duration.ZERO, ultrasoundTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.ULTRASOUND, ultrasoundTime, Duration.ZERO));
+		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.ULTRASOUND, ultrasoundTime, Duration.ZERO));
+		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, ultrasoundTime, Duration.ZERO));
 		
 		return new AppointmentType("1 Week Follow Up", resourceUsageList, new BigDecimal(0.00));
 	}
@@ -79,10 +80,20 @@ public class AppointmentTypeSetBuilder {
 	private static AppointmentType freeEvaluation(){
 		ResourceUsageTemplateList resourceUsageList = new ResourceUsageTemplateList();
 		Duration physicianTime = Duration.ofMinutes(15);
-		resourceUsageList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, Duration.ZERO, physicianTime));
-		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, Duration.ZERO, physicianTime));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.PHYSICIAN, physicianTime, Duration.ZERO));
+		resourceUsageList.add(new ResourceUsageTemplate(RoomType.CONSULT, physicianTime, Duration.ZERO));
 		return new AppointmentType("Free Evaluation", resourceUsageList, new BigDecimal(0));
 	}
 
+	private static AppointmentType veinEraseLegs() {
+		ResourceUsageTemplateList resourceUsageList = new ResourceUsageTemplateList();
+		Duration appointmentTime = Duration.ofMinutes(45);
+		resourceUsageList.add(new ResourceUsageTemplate(RoomType.PROCEDURE, appointmentTime, Duration.ZERO));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.MEDTECH, appointmentTime, Duration.ZERO));
+		resourceUsageList.add(new ResourceUsageTemplate(StaffType.NURSE, appointmentTime, Duration.ZERO));
+		resourceUsageList.add(new ResourceUsageTemplate(EquipmentType.CRYO, appointmentTime, Duration.ZERO));
+		
+		return new AppointmentType("VeinErase Legs", resourceUsageList, new BigDecimal(395.00));
+	}
 	
 }

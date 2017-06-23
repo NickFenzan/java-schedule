@@ -14,4 +14,5 @@ repositories {
 dependencies {
 	compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.guava:guava:22.0'
+    testCompile 'junit:junit:4.12'
 }

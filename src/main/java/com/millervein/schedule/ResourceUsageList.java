@@ -1,13 +1,13 @@
 package com.millervein.schedule;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
 
 @SuppressWarnings("serial")
 public class ResourceUsageList extends ArrayList<ResourceUsage> {
@@ -30,36 +30,10 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 				.orElseThrow(() -> new IllegalStateException());
 	}
 
-	public Duration smallestDuration() {
-		return this.stream().map(r -> r.getTimePeriod().getDuration()).min((dur1, dur2) -> dur1.compareTo(dur2))
-				.orElseThrow(() -> new IllegalStateException());
+	public void add(ResourceType resourceType, TimePeriod timePeriod){
+		this.add(ResourceUsage.create(resourceType, timePeriod));
 	}
-
-	public Duration smallestGap() {
-		Duration smallestGap = null;
-		this.sortByStartTime();
-		PeekingIterator<ResourceUsage> iter = Iterators.peekingIterator(this.iterator());
-		while (iter.hasNext()) {
-			ResourceUsage current = iter.next();
-			while (iter.hasNext()) {
-				ResourceUsage next = iter.peek();
-				Duration gap = Duration.between(current.getTimePeriod().getEnd(), next.getTimePeriod().getStart());
-				if (gap.compareTo(Duration.ZERO) > 0) {
-					if (smallestGap == null) {
-						smallestGap = gap;
-					} else if (gap.compareTo(smallestGap) < 0) {
-						smallestGap = gap;
-					}
-				}
-				iter.next();
-			}
-		}
-		return smallestGap;
-	}
-
-	private void sortByStartTime() {
-		this.sort((a, b) -> a.getTimePeriod().getStart().compareTo(b.getTimePeriod().getStart()));
-	}
+	
 
 	/**
 	 * Counts the amount of resources in the list that overlap a given time
@@ -79,28 +53,6 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 		return usageCount;
 	}
 
-	public Duration maximumComprehensiveInterval() {
-		Duration smallestDifferenceBetweenResourceStart = null;
-		this.sortByStartTime();
-		PeekingIterator<ResourceUsage> iter = Iterators.peekingIterator(this.iterator());
-		while (iter.hasNext()) {
-			ResourceUsage current = iter.next();
-			while (iter.hasNext()) {
-				ResourceUsage next = iter.peek();
-				Duration gap = Duration.between(current.getTimePeriod().getStart(), next.getTimePeriod().getStart());
-				if (gap.compareTo(Duration.ZERO) > 0) {
-					if (smallestDifferenceBetweenResourceStart == null) {
-						smallestDifferenceBetweenResourceStart = gap;
-					} else if (gap.compareTo(smallestDifferenceBetweenResourceStart) < 0) {
-						smallestDifferenceBetweenResourceStart = gap;
-					}
-				}
-				iter.next();
-			}
-		}
-		return smallestDifferenceBetweenResourceStart;
-	}
-
 	public ResourceUsageList getResourceTypeUsageList(ResourceType staffType) {
 		ResourceUsageList newList = new ResourceUsageList();
 		for(ResourceUsage resourceUsage : this){
@@ -117,6 +69,45 @@ public class ResourceUsageList extends ArrayList<ResourceUsage> {
 			Integer currentOverlap = 0;
 			for (ResourceUsage otherStaffUsage : staffTypeList) {
 				if (staffUsage.getTimePeriod().overlaps(otherStaffUsage.getTimePeriod())) {
+					currentOverlap++;
+				}
+			}
+			highestOverlap = (currentOverlap > highestOverlap) ? currentOverlap : highestOverlap;
+		}
+		return highestOverlap;
+	}
+	
+	public Set<ResourceType> resourceTypes(){
+		return this.stream().map(r -> r.getResourceType()).distinct().collect(Collectors.toSet());
+	}
+	
+	public Map<ResourceType, ResourceUsageList> typePartionedResourceUsage(){
+		Map<ResourceType, ResourceUsageList> map = new HashMap<ResourceType, ResourceUsageList>();
+		for(ResourceUsage usage : this){
+			ResourceType type = usage.getResourceType();
+			ResourceUsageList typeUsage = map.getOrDefault(type, new ResourceUsageList());
+			typeUsage.add(usage);
+			map.put(type, typeUsage);
+		}
+		return map;
+	}
+	
+	public Map<ResourceType, Integer> getResourceTypeConcurrency(){
+		Map<ResourceType, Integer> typeConcurrency = new HashMap<ResourceType, Integer>();
+		for(Map.Entry<ResourceType, ResourceUsageList> entry : typePartionedResourceUsage().entrySet()){
+			ResourceType type = entry.getKey();
+			ResourceUsageList usages = entry.getValue();
+			typeConcurrency.put(type, usages.concurrency());
+		}
+		return typeConcurrency;
+	}
+	
+	public Integer concurrency(){
+		Integer highestOverlap = 0;
+		for (ResourceUsage usage : this) {
+			Integer currentOverlap = 0;
+			for (ResourceUsage otherUsage : this) {
+				if (usage.getTimePeriod().overlaps(otherUsage.getTimePeriod())) {
 					currentOverlap++;
 				}
 			}

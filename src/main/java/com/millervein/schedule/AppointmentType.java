@@ -28,7 +28,7 @@ public class AppointmentType {
 	}
 
 	public TimePeriod timePeriodAt(LocalDateTime datetime) {
-		return new TimePeriod(datetime, this.resourceUsageTemplate.getTotalDuration());
+		return TimePeriod.withDuration(datetime, this.resourceUsageTemplate.getTotalDuration());
 	}
 
 	public Duration getSmallestResourceDuration() {

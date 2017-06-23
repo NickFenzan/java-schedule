@@ -22,7 +22,7 @@ public class ResourceUsageTemplateList extends ArrayList<ResourceUsageTemplate> 
 	public Duration getTotalDuration() {
 		LocalDateTime now = LocalDateTime.now();
 		TimePeriod latestPeriod = this.stream().map(resUsage -> resUsage.timePeriodAt(now))
-				.reduce(new TimePeriod(now, Duration.ZERO), (latest, next) -> next.endsAfter(latest) ? next : latest);
+				.reduce(TimePeriod.withDuration(now, Duration.ZERO), (latest, next) -> next.endsAfter(latest) ? next : latest);
 		return Duration.between(now, latestPeriod.getEnd());
 	}
 }

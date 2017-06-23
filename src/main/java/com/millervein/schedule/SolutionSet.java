@@ -83,5 +83,9 @@ public class SolutionSet extends ForwardingSet<AppointmentList> {
 		Integer maxAppointments = delegate.stream().map(s -> s.size()).reduce(0, (a, b) -> b > a ? b : a);
 		this.delegate = delegate.stream().filter(s -> s.size() == maxAppointments).collect(Collectors.toSet());
 	}
+	
+	public void filterAppointmentTypeDemands(AppointmentTypeDemands demands){
+		
+	}
 
 }

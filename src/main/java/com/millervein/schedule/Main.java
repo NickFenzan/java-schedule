@@ -55,6 +55,7 @@ public class Main {
 	private static ResourceTypeLimitMap<EquipmentType> equipmentLimits() {
 		ResourceTypeLimitMap<EquipmentType> limits = ResourceTypeLimitMap.create();
 		limits.put(EquipmentType.ULTRASOUND, 5);
+		limits.put(EquipmentType.CRYO, 1);
 		return limits;
 	}
 	
@@ -70,15 +71,21 @@ public class Main {
 		resourceTypeLimits.put(EquipmentType.class, equipmentLimits());
 		return resourceTypeLimits;
 	}
+ 	
+ 	private static AppointmentTypeDemands appointmentTypeDemands(){
+ 		AppointmentTypeDemands appointmentTypeDemands = AppointmentTypeDemands.create();
+ 		return appointmentTypeDemands;
+ 	}
 
 	public static void main(String[] args) throws Exception {
 		SortedSet<LocalDateTime> timeRange = timeRange();
 		ResourceTypeLimits resourceTypeLimits = resourceTypeLimits();
 		AppointmentTypeSet appointmentTypes = AppointmentTypeSetBuilder.build();
+		AppointmentTypeDemands appointmentTypeDemands = appointmentTypeDemands();
 
 		timeRange = TimeRange.generateTimeRange(LocalDateTime.now().with(LocalTime.of(8, 0)), LocalDateTime.now().with(LocalTime.of(17, 00)), Duration.ofMinutes(15));
 		
-		SolutionSetGenerator ag = new SolutionSetGenerator(appointmentTypes, resourceTypeLimits);
+		SolutionSetGenerator ag = new SolutionSetGenerator(appointmentTypes, resourceTypeLimits, appointmentTypeDemands);
 		SolutionSet solutionSet = ag.generateAppointmentsForTimes(timeRange);
 
 		printSolutions(solutionSet);
