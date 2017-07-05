@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.util.logging.Logger;
 
 import org.junit.Test;
+
+import com.millervein.schedule.domain.TimePeriod;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 

@@ -1,11 +1,11 @@
-package com.millervein.schedule;
+package com.millervein.schedule.services;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class TimeRange {
+public class TimeRangeGenerator {
 	public static SortedSet<LocalDateTime> generateTimeRange(LocalDateTime start, LocalDateTime end,
 			Duration interval) {
 		SortedSet<LocalDateTime> timeRange = new TreeSet<LocalDateTime>();
